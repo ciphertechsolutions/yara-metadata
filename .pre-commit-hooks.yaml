@@ -1,0 +1,15 @@
+# .pre-commit-hooks.yaml
+- id: yara-metadata
+  name: yara-metadata
+  description: Pre-commit hook for maintaining updates to yara rules
+  entry: yara_metadata
+  files: ".yara$|.yar$"
+  language: python
+  require_serial: true
+- id: yarax-format
+  name: yarax-format
+  description: Format yara rules
+  entry: yr
+  language: system
+  files: ".yara$|.yar$"
+  args: ["fmt"]

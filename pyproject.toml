@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yara_metadata"
+version = "v1.0.0"
+description = "Pre-commit hook for maintaining updates to yara rules"
+readme = "README.rst"
+authors = [
+  {name = "Cipher Tech Solutions", email = "opensource@ciphertechsolutions.com"}
+]
+maintainers = [
+  {name = "Cipher Tech Solutions", email = "opensource@ciphertechsolutions.com"}
+]
+classifiers = [
+
+]
+license = {text = "MIT license"}
+dependencies = [
+  "yaramod",
+  "gitpython",
+  "argparse",
+  "yara-x"
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage",  # testing
+    "mypy",  # linting
+    "pytest",  # testing
+    "ruff"  # linting
+]
+
+[project.urls]
+
+bugs = "https://github.com/ciphertechsolutions/yara_metadata/issues"
+changelog = "https://github.com/ciphertechsolutions/yara_metadata/blob/master/changelog.md"
+homepage = "https://github.com/ciphertechsolutions/yara_metadata"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+"*" = ["*.*"]
+
+
+
+
+# Mypy
+# ----
+
+[tool.mypy]
+files = "."
+
+# Use strict defaults
+strict = true
+warn_unreachable = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+# Don't require test functions to include types
+module = "tests.*"
+allow_untyped_defs = true
+disable_error_code = "attr-defined"
+
+[project.scripts]
+yara_metadata = "yara_metadata.yara_metadata:main"
