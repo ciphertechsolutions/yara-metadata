@@ -73,24 +73,25 @@ This interaction between the two can cause formatting issues.  Until this behavi
 
 .. code-block::
 
-- repo: https://github.com/ciphertechsolutions/yara-metadata
-  rev: v1.0.0
-  hooks:
-    - id: yara-metadata
-      name: yara-metadata
-      args: [
-        "--initial",
-        "--ignored-hashes", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "--ignored-hashes", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      ]
-- repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.5.5
-  hooks:
-    - id: remove-tabs
-      files: ".yara$|.yar$"
-- repo: https://github.com/ciphertechsolutions/yara-metadata
-  rev: v1.0.0
-  hooks:
-    - id: yarax-format
-      name: yarax-format
-      args: ["-C", "src/acce_parsers/resources/rules/.yara-x.toml", "fmt"]
+    repos:
+    - repo: https://github.com/ciphertechsolutions/yara-metadata
+      rev: v1.0.0
+      hooks:
+        - id: yara-metadata
+          name: yara-metadata
+          args: [
+            "--initial",
+            "--ignored-hashes", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "--ignored-hashes", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          ]
+    - repo: https://github.com/Lucas-C/pre-commit-hooks
+      rev: v1.5.5
+      hooks:
+        - id: remove-tabs
+          files: ".yara$|.yar$"
+    - repo: https://github.com/ciphertechsolutions/yara-metadata
+      rev: v1.0.0
+      hooks:
+        - id: yarax-format
+          name: yarax-format
+          args: ["-C", "src/acce_parsers/resources/rules/.yara-x.toml", "fmt"]
