@@ -21,7 +21,8 @@ dependencies = [
   "yaramod",
   "gitpython",
   "argparse",
-  "yara-x"
+  "yara-x",
+  "toml",
 ]
 
 [project.optional-dependencies]
@@ -66,3 +67,4 @@ disable_error_code = "attr-defined"
 
 [project.scripts]
 yara_metadata = "yara_metadata.yara_metadata:main"
+yarax_format = "yara_metadata.yarax_format:main"

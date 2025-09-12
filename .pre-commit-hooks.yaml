@@ -9,7 +9,6 @@
 - id: yarax-format
   name: yarax-format
   description: Format yara rules
-  entry: yr
-  language: system
+  entry: yarax_format
+  language: python
   files: ".yara$|.yar$"
-  args: ["fmt"]
