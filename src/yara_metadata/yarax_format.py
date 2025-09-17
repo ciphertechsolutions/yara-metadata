@@ -11,12 +11,14 @@ def format_files(files: List[Path], config: Dict = {}):
 
     for file in files:
         with open(file, "r") as f:
-            old_content = f.read()
+            old_content = StringIO(f.read())
             new_content = StringIO()
-            formatter.format(StringIO(old_content), new_content)
-            overwrite_file((file, old_content, new_content))
+            formatter.format(old_content, new_content)
+            overwrite_file(file, old_content, new_content.getvalue())
 
 def overwrite_file(path: Path, old_content: str, new_content: str):
+    if not new_content:
+        return
     if old_content != new_content:
         with path.open("wb") as file:
             file.write(new_content.encode())
@@ -62,3 +64,6 @@ def main():
     config = load_config(config_path)
 
     format_files(file_names, config)
+
+if __name__ == "__main__":
+    main()

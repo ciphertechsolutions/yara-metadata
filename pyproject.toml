@@ -21,7 +21,7 @@ dependencies = [
   "yaramod",
   "gitpython",
   "argparse",
-  "yara-x",
+  "yara-x>=1.7.0",
   "toml",
 ]
 
