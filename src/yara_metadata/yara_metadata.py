@@ -71,7 +71,7 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
         if meta :=rule.get_meta_with_name(modified_tag):
             print(f"new last_modified: {str(last_modified)}")
             print(f"old last_modified: {str(meta.value)}")
-            if meta.value != str(last_modified):
+            if str(meta.value) != str(last_modified):
                 print("Updated last_modified")
                 updated = True
                 meta.value = yaramod.Literal(str(last_modified))
