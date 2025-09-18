@@ -13,6 +13,7 @@ def format_files(files: List[Path], config: Dict = {}):
         with open(file, "r") as f:
             old_content = StringIO(f.read())
             new_content = StringIO()
+            print(f"Formatting: {file}")
             formatter.format(old_content, new_content)
             overwrite_file(file, old_content, new_content.getvalue())
 
