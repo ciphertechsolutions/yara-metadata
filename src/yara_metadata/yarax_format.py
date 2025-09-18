@@ -14,7 +14,10 @@ def format_files(files: List[Path], config: Dict = {}):
             old_content = StringIO(f.read())
             new_content = StringIO()
             print(f"Formatting: {file}")
-            formatter.format(old_content, new_content)
+            try:
+                formatter.format(old_content, new_content)
+            except Exception as e:
+                print(f"Failed to format: {file}, with error {e}")
             overwrite_file(file, old_content, new_content.getvalue())
 
 def overwrite_file(path: Path, old_content: str, new_content: str):
