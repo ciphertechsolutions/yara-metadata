@@ -95,6 +95,9 @@ def main():
     store_commit_hash = args.hash
     file_names: List[Path] = args.filenames
 
+    print(store_commit_hash)
+    print(ignored_hashes)
+
     if args.initial:
         initial_run([file_path for file_path in file_names], created_tag, modified_tag, ignored_hashes, store_commit_hash)
         return
