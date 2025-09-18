@@ -48,6 +48,13 @@ def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_
 
 
 def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str):
+    print(file_path)
+    print(last_modified)
+    print(created_on)
+    print(created_tag)
+    print(modified_tag)
+    print(store_commit_hash)
+    print(commit_hash)
     updated = False
     try:
         yara_file = ym.parse_file(str(file_path))
@@ -56,15 +63,20 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
         return
     for rule in yara_file.rules:
         if rule.get_meta_with_name(created_tag):
+            print(f"{created_tag} already exists")
             pass
         else:
             updated = True
             rule.add_meta(created_tag, yaramod.Literal(str(created_on)))
         if meta :=rule.get_meta_with_name(modified_tag):
+            print(f"new last_modified: {str(last_modified)}")
+            print(f"old last_modified: {str(meta.value)}")
             if meta.value != str(last_modified):
+                print("Updated last_modified")
                 updated = True
                 meta.value = yaramod.Literal(str(last_modified))
         else:
+            print(f"Adding {last_modified}")
             updated = True
             rule.add_meta(modified_tag, yaramod.Literal(str(last_modified)))
         if store_commit_hash:
@@ -98,7 +110,9 @@ def main():
     if args.initial:
         initial_run([file_path for file_path in file_names], created_tag, modified_tag, ignored_hashes, store_commit_hash)
         return
+    print(args.filenames)
     yara_files = get_yara_files(args.filenames)
+    print(yara_files)
     current_date = date.today()
     for file in yara_files:
         repo = Repo(".")
