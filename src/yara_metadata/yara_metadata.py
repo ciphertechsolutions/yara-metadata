@@ -56,7 +56,7 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
         return
     for rule in yara_file.rules:
         if rule.get_meta_with_name(created_tag):
-            continue
+            pass
         else:
             updated = True
             rule.add_meta(created_tag, yaramod.Literal(str(created_on)))
