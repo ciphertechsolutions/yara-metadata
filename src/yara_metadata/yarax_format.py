@@ -4,24 +4,27 @@ from typing import Dict, List
 import yara_x
 import toml
 
-from io import StringIO
+from io import BytesIO
 
 def format_files(files: List[Path], config: Dict = {}):
     formatter = get_formatter(config)
 
     for file in files:
-        with open(file, "r") as f:
-            old_content = StringIO(f.read())
-            new_content = StringIO()
-            formatter.format(old_content, new_content)
-            overwrite_file(file, old_content, new_content.getvalue())
+        with open(file, "rb") as f:
+            old_content = BytesIO(f.read())
+            new_content = BytesIO()
+            try:
+                formatter.format(old_content, new_content)
+            except Exception as e:
+                print(f"Failed to format: {file}, with error {e}")
+            overwrite_file(file, old_content.getvalue(), new_content.getvalue())
 
-def overwrite_file(path: Path, old_content: str, new_content: str):
+def overwrite_file(path: Path, old_content: bytes, new_content: bytes):
     if not new_content:
         return
     if old_content != new_content:
         with path.open("wb") as file:
-            file.write(new_content.encode())
+            file.write(new_content)
 
 
 def load_config(config_path: Path):
