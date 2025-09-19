@@ -39,7 +39,6 @@ def process_commits(commits: List[Commit], ignored_hashes: List[str], files: Lis
     yara_files = defaultdict[str, YaraFile](YaraFile)
     current_paths = {file.name: file for file in files}
     file_names = [file.name for file in files]
-    print(commits)
     for commit in commits:
         if commit.hexsha in ignored_hashes:
             return
@@ -51,6 +50,7 @@ def process_commits(commits: List[Commit], ignored_hashes: List[str], files: Lis
                 yara_files[file_name].created_on.date = commit_date
                 yara_files[file_name].created_on.commit = commit
                 yara_files[file_name].file = value
+    print(yara_files)
     for yara_file in yara_files.values():
         update_metadata(yara_file.file_path, yara_file.last_modified.date, yara_file.created_on.date, created_tag, modified_tag, store_commit_hash, yara_file.last_modified.commit.hexsha)
 
