@@ -48,13 +48,6 @@ def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_
 
 
 def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str):
-    print(file_path)
-    print(last_modified)
-    print(created_on)
-    print(created_tag)
-    print(modified_tag)
-    print(store_commit_hash)
-    print(commit_hash)
     updated = False
     try:
         yara_file = ym.parse_file(str(file_path))
@@ -69,14 +62,10 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
             updated = True
             rule.add_meta(created_tag, yaramod.Literal(str(created_on)))
         if meta :=rule.get_meta_with_name(modified_tag):
-            print(f"new last_modified: {str(last_modified)}")
-            print(f"old last_modified: {str(meta.value.string)}")
             if meta.value.string != str(last_modified):
-                print("Updated last_modified")
                 updated = True
                 meta.value = yaramod.Literal(str(last_modified))
         else:
-            print(f"Adding {last_modified}")
             updated = True
             rule.add_meta(modified_tag, yaramod.Literal(str(last_modified)))
         if store_commit_hash:
@@ -88,6 +77,7 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
                 updated = True
                 rule.add_meta("commit_hash", yaramod.Literal(str(commit_hash)))
     if updated:
+        print(f'Updating {file_path}')
         overwrite_file(Path(file_path), yara_file.text_formatted)
 
 
