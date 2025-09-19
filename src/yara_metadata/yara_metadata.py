@@ -119,8 +119,8 @@ def main():
     current_date = date.today()
     branch_from = os.environ.get("YARA_METADATA_BRANCH_FROM")
     branch_to = os.environ.get("YARA_METADATA_BRANCH_TO")
-    branch_from = "origin/master"
-    branch_to = "yara-metadata-test"
+    # branch_from = "origin/master"
+    # branch_to = "yara-metadata-test"
     if branch_from and branch_to:
         merge_run(branch_from, branch_to, ignored_hashes, file_names, created_tag, modified_tag, store_commit_hash)
     else:
