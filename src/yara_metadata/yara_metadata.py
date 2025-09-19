@@ -36,10 +36,10 @@ def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_
 
 def process_commits(commits: List[Commit], ignored_hashes: List[str], files: List[Path], created_tag: str, modified_tag: str, store_commit_hash: bool):
     files = get_yara_files(files)
-    print(files)
     yara_files = defaultdict[str, YaraFile](YaraFile)
     current_paths = {file.name: file for file in files}
     file_names = [file.name for file in files]
+    print(commits)
     for commit in commits:
         if commit.hexsha in ignored_hashes:
             return
@@ -107,13 +107,11 @@ def main():
     parser.add_argument("filenames", nargs="*", type=Path)
     args = parser.parse_args()
 
-    print(args)
     created_tag = args.created_tag
     modified_tag = args.modified_tag
     ignored_hashes = args.ignored_hashes
     store_commit_hash = args.hash
     file_names: List[Path] = args.filenames
-    print(file_names)
 
     if args.initial:
         # initial_run([file_path for file_path in file_names], created_tag, modified_tag, ignored_hashes, store_commit_hash)
