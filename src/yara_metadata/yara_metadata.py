@@ -93,6 +93,7 @@ def main():
     parser.add_argument("filenames", nargs="*", type=Path)
     args = parser.parse_args()
 
+    print(args)
     created_tag = args.created_tag
     modified_tag = args.modified_tag
     ignored_hashes = args.ignored_hashes
