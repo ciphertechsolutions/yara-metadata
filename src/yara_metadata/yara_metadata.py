@@ -34,7 +34,6 @@ def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_
     process_commits([commit for commit in repo.iter_commits()], ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
 
 def process_commits(commits: List[Commit], ignored_hashes: List[str], files: List[Path], created_tag: str, modified_tag: str, store_commit_hash: bool):
-    print(commit)
     files = get_yara_files(files)
     yara_files = defaultdict[str, YaraFile](YaraFile)
     current_paths = {file.name: file for file in files}
