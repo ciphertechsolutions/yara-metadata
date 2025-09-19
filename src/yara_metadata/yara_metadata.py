@@ -31,25 +31,25 @@ class YaraFile:
 
 def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_hashes: List[str] = [], store_commit_hash=False):
     repo = Repo(".")
-    for commit in repo.iter_commits():
-        process_commit(commit, ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
+    process_commits([commit for commit in repo.iter_commits()], ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
 
-def process_commit(commit: Commit, ignored_hashes: List[str], files: List[Path], created_tag: str, modified_tag: str, store_commit_hash: bool):
+def process_commits(commits: List[Commit], ignored_hashes: List[str], files: List[Path], created_tag: str, modified_tag: str, store_commit_hash: bool):
     print(commit)
     files = get_yara_files(files)
     yara_files = defaultdict[str, YaraFile](YaraFile)
     current_paths = {file.name: file for file in files}
     file_names = [file.name for file in files]
-    if commit.hexsha in ignored_hashes:
-        return
-    commit_date = datetime.date.fromtimestamp(commit.authored_date)
-    for path, file_name, value in [(key, Path(key).name, value) for key, value in commit.stats.files.items() if Path(key).name in file_names and (key.endswith(".yara") or key.endswith(".yar"))]:
-        if not file_name in yara_files:
-            yara_files[file_name] = YaraFile(file_name, current_paths[file_name], CommitDate(commit_date, commit), CommitDate(commit_date, commit), value)
-        else:
-            yara_files[file_name].created_on.date = commit_date
-            yara_files[file_name].created_on.commit = commit
-            yara_files[file_name].file = value
+    for commit in commits:
+        if commit.hexsha in ignored_hashes:
+            return
+        commit_date = datetime.date.fromtimestamp(commit.authored_date)
+        for path, file_name, value in [(key, Path(key).name, value) for key, value in commit.stats.files.items() if Path(key).name in file_names and (key.endswith(".yara") or key.endswith(".yar"))]:
+            if not file_name in yara_files:
+                yara_files[file_name] = YaraFile(file_name, current_paths[file_name], CommitDate(commit_date, commit), CommitDate(commit_date, commit), value)
+            else:
+                yara_files[file_name].created_on.date = commit_date
+                yara_files[file_name].created_on.commit = commit
+                yara_files[file_name].file = value
     for yara_file in yara_files.values():
         update_metadata(yara_file.file_path, yara_file.last_modified.date, yara_file.created_on.date, created_tag, modified_tag, store_commit_hash, yara_file.last_modified.commit.hexsha)
 
@@ -58,8 +58,7 @@ def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files
     repo = Repo(".")
     commits = repo.git.rev_list(f"{branch_from}..{branch_to}")
     commits = [commit for commit in repo.iter_commits() if commit.hexsha in commits]
-    for commit in reversed(commits):
-        process_commit(commit, ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
+    process_commits(commits, ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
 
 def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str):
     updated = False
