@@ -30,6 +30,7 @@ class YaraFile:
     file: Files_TD
 
 def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_hashes: List[str] = [], store_commit_hash=False):
+    print("Initial run")
     repo = Repo(".")
     process_commits([commit for commit in repo.iter_commits()], ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
 
