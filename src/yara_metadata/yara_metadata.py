@@ -55,9 +55,7 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
         print(f'Failed to parse {file_path}, please add the following metadata manually, if needed: {created_tag} = "{created_on}", {modified_tag} = "{last_modified}", "commit_hash" = "{commit_hash}"')
         return
     for rule in yara_file.rules:
-        if rule.get_meta_with_name(created_tag):
-            continue
-        else:
+        if not rule.get_meta_with_name(created_tag):
             updated = True
             rule.add_meta(created_tag, yaramod.Literal(str(created_on)))
         if meta :=rule.get_meta_with_name(modified_tag):
