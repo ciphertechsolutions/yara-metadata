@@ -1,7 +1,9 @@
 import argparse
+from codecs import ignore_errors
 from collections import defaultdict
 from dataclasses import dataclass
 import datetime
+import os
 from pathlib import Path
 from typing import List
 from git import Repo, Commit
@@ -28,11 +30,15 @@ class YaraFile:
     file: Files_TD
 
 def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_hashes: List[str] = [], store_commit_hash=False):
+    repo = Repo(".")
+    process_commits([commit for commit in repo.iter_commits()], ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
+
+def process_commits(commits: List[Commit], ignored_hashes: List[str], files: List[Path], created_tag: str, modified_tag: str, store_commit_hash: bool):
+    files = get_yara_files(files)
     yara_files = defaultdict[str, YaraFile](YaraFile)
     current_paths = {file.name: file for file in files}
-    repo = Repo(".")
     file_names = [file.name for file in files]
-    for commit in repo.iter_commits():
+    for commit in commits:
         if commit.hexsha in ignored_hashes:
             continue
         commit_date = datetime.date.fromtimestamp(commit.authored_date)
@@ -47,6 +53,12 @@ def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_
         update_metadata(yara_file.file_path, yara_file.last_modified.date, yara_file.created_on.date, created_tag, modified_tag, store_commit_hash, yara_file.last_modified.commit.hexsha)
 
 
+def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files: List[Path], created_tag, modified_tag, store_commit_hash):
+    repo = Repo(".")
+    commits = repo.git.rev_list(f"{branch_from}..{branch_to}")
+    commits = [commit for commit in repo.iter_commits() if commit.hexsha in commits]
+    process_commits(commits, ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
+
 def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str):
     updated = False
     try:
@@ -55,11 +67,13 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
         print(f'Failed to parse {file_path}, please add the following metadata manually, if needed: {created_tag} = "{created_on}", {modified_tag} = "{last_modified}", "commit_hash" = "{commit_hash}"')
         return
     for rule in yara_file.rules:
-        if not rule.get_meta_with_name(created_tag):
+        if rule.get_meta_with_name(created_tag):
+            pass
+        else:
             updated = True
             rule.add_meta(created_tag, yaramod.Literal(str(created_on)))
         if meta :=rule.get_meta_with_name(modified_tag):
-            if meta.value != str(last_modified):
+            if meta.value.string != str(last_modified):
                 updated = True
                 meta.value = yaramod.Literal(str(last_modified))
         else:
@@ -74,6 +88,7 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
                 updated = True
                 rule.add_meta("commit_hash", yaramod.Literal(str(commit_hash)))
     if updated:
+        print(f'Updating {file_path}')
         overwrite_file(Path(file_path), yara_file.text_formatted)
 
 
@@ -94,14 +109,22 @@ def main():
     file_names: List[Path] = args.filenames
 
     if args.initial:
-        initial_run([file_path for file_path in file_names], created_tag, modified_tag, ignored_hashes, store_commit_hash)
+        # initial_run([file_path for file_path in file_names], created_tag, modified_tag, ignored_hashes, store_commit_hash)
+        initial_run(file_names, created_tag, modified_tag, ignored_hashes, store_commit_hash)
         return
-    yara_files = get_yara_files(args.filenames)
     current_date = date.today()
-    for file in yara_files:
-        repo = Repo(".")
-        commit = repo.commit()
-        update_metadata(file, current_date, current_date, created_tag, modified_tag, store_commit_hash, commit.hexsha)
+    branch_from = os.environ.get("YARA_METADATA_BRANCH_FROM")
+    branch_to = os.environ.get("YARA_METADATA_BRANCH_TO")
+    # branch_from = "origin/master"
+    # branch_to = "yara-metadata-test"
+    if branch_from and branch_to:
+        merge_run(branch_from, branch_to, ignored_hashes, file_names, created_tag, modified_tag, store_commit_hash)
+    else:
+        yara_files = get_yara_files(args.filenames)
+        for file in yara_files:
+            repo = Repo(".")
+            commit = repo.commit()
+            update_metadata(file, current_date, current_date, created_tag, modified_tag, store_commit_hash, commit.hexsha)
 
 def overwrite_file(path: Path, new_content: str):
     with path.open("r") as file:
