@@ -23,6 +23,7 @@ def overwrite_file(path: Path, old_content: bytes, new_content: bytes):
     if not new_content:
         return
     if old_content != new_content:
+        print(f'Updating {path}')
         with path.open("wb") as file:
             file.write(new_content)
 

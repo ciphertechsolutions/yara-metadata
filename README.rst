@@ -53,6 +53,13 @@ After your initial run and commit you should be able to remove the ``--initial``
       - id: yara-metadata
         name: yara-metadata
 
+For use in CI you must run the tool in a different fashion.  When the hook is run locally it assumes all files passed to it have been updated (because that's generally how pre-commit works).
+When pre-commit is run in ci it is generally used with --all-files, this ensures issues are caught even when a developer didn't have pre-commit setup locally.
+To get around this we run a limited scope git history parse on the diff between the merge request branch and the target branch, this is the same strategy as with ``--initial``, 
+but without going through potentially thousands of commits.  Merge request mode is automatically done when ``YARA_METADATA_BRANCH_FROM`` and ``YARA_METADATA_BRANCH_TO`` environment variables are set.
+Values can be branch names, tags, or commits, for branches and tags you'll likely need to includes origin/ since CI doesn't always pull the all git information.
+
+
 For consistent yara rule formatting use the yarax fmt command as a pre-commit hook by adding the following to your ``.pre-commit-config.yaml``
 
 .. code-block::
@@ -64,34 +71,3 @@ For consistent yara rule formatting use the yarax fmt command as a pre-commit ho
       - id: yarax-format
         name: yarax-format
         args: ["-C", ".yara-x.toml", "fmt"]
-
-Code indentation issues
------------------------
-
-At the time of writing this yara-x version 1.6.0 has issues formatting tabs to spaces in multiline comments.  Yaramod (the tool used to insert/manage metadata in rules) only outputs with tabs.
-This interaction between the two can cause formatting issues.  Until this behavior is fixed you can use another pre-commit hook to turn the yaramod tabs back into spaces using the following configuration.
-
-.. code-block::
-
-    repos:
-    - repo: https://github.com/ciphertechsolutions/yara-metadata
-      rev: v1.0.0
-      hooks:
-        - id: yara-metadata
-          name: yara-metadata
-          args: [
-            "--initial",
-            "--ignored-hashes", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "--ignored-hashes", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-          ]
-    - repo: https://github.com/Lucas-C/pre-commit-hooks
-      rev: v1.5.5
-      hooks:
-        - id: remove-tabs
-          files: ".yara$|.yar$"
-    - repo: https://github.com/ciphertechsolutions/yara-metadata
-      rev: v1.0.0
-      hooks:
-        - id: yarax-format
-          name: yarax-format
-          args: ["-C", "src/acce_parsers/resources/rules/.yara-x.toml", "fmt"]
