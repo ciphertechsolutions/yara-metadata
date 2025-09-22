@@ -61,6 +61,7 @@ def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files
 
 def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str):
     updated = False
+    updates = []
     try:
         yara_file = ym.parse_file(str(file_path))
     except yaramod.ParserError:
@@ -69,24 +70,29 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
     for rule in yara_file.rules:
         if not rule.get_meta_with_name(created_tag):
             updated = True
+            updates.append(f"Created: {created_tag}, with value: {str(created_on)}")
             rule.add_meta(created_tag, yaramod.Literal(str(created_on)))
         if meta :=rule.get_meta_with_name(modified_tag):
             if meta.value.string != str(last_modified):
                 updated = True
+                updates.append(f"Updated: {modified_tag}, with value: {str(last_modified)}")
                 meta.value = yaramod.Literal(str(last_modified))
         else:
             updated = True
+            updates.append(f"Created: {modified_tag}, with value: {str(last_modified)}")
             rule.add_meta(modified_tag, yaramod.Literal(str(last_modified)))
         if store_commit_hash:
             if meta :=rule.get_meta_with_name("commit_hash"):
                 if meta.value != str(commit_hash):
                     updated = True
+                    updates.append(f"Updated: commit_hash, with value: {str(commit_hash)}")
                     meta.value = yaramod.Literal(str(commit_hash))
             else:
                 updated = True
+                updates.append(f"Created: commit_hash, with value: {str(commit_hash)}")
                 rule.add_meta("commit_hash", yaramod.Literal(str(commit_hash)))
     if updated:
-        print(f'Updating {file_path}')
+        print(f'Updating {file_path}: {updates}')
         overwrite_file(Path(file_path), yara_file.text_formatted)
 
 
