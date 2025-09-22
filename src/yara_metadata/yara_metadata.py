@@ -109,14 +109,11 @@ def main():
     file_names: List[Path] = args.filenames
 
     if args.initial:
-        # initial_run([file_path for file_path in file_names], created_tag, modified_tag, ignored_hashes, store_commit_hash)
         initial_run(file_names, created_tag, modified_tag, ignored_hashes, store_commit_hash)
         return
     current_date = date.today()
     branch_from = os.environ.get("YARA_METADATA_BRANCH_FROM")
     branch_to = os.environ.get("YARA_METADATA_BRANCH_TO")
-    # branch_from = "origin/master"
-    # branch_to = "yara-metadata-test"
     if branch_from and branch_to:
         merge_run(branch_from, branch_to, ignored_hashes, file_names, created_tag, modified_tag, store_commit_hash)
     else:
