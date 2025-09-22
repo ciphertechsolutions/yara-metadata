@@ -30,6 +30,7 @@ class YaraFile:
     file: Files_TD
 
 def initial_run(files: List[Path], created_tag: str, modified_tag: str, ignored_hashes: List[str] = [], store_commit_hash=False):
+    print(f"Running in initial mode on all commits")
     repo = Repo(".")
     process_commits([commit for commit in repo.iter_commits()], ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
 
@@ -57,6 +58,7 @@ def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files
     repo = Repo(".")
     commits = repo.git.rev_list(f"{branch_from}..{branch_to}")
     commits = [commit for commit in repo.iter_commits() if commit.hexsha in commits]
+    print(f"Running in merge mode with from: {branch_from}, to: {branch_to}.  Processing {len(commits)} commits.")
     process_commits(commits, ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
 
 def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str):
@@ -112,16 +114,19 @@ def main():
     store_commit_hash = args.hash
     file_names: List[Path] = args.filenames
 
-    if args.initial:
-        initial_run(file_names, created_tag, modified_tag, ignored_hashes, store_commit_hash)
-        return
+
     current_date = date.today()
     branch_from = os.environ.get("YARA_METADATA_BRANCH_FROM")
     branch_to = os.environ.get("YARA_METADATA_BRANCH_TO")
-    if branch_from and branch_to:
+    branch_from = "origin/master"
+    branch_to = "da7ee92282081a8cdf684ab8e4d658f5a9202b6b"
+    if args.initial:
+        initial_run(file_names, created_tag, modified_tag, ignored_hashes, store_commit_hash)
+    elif branch_from and branch_to:
         merge_run(branch_from, branch_to, ignored_hashes, file_names, created_tag, modified_tag, store_commit_hash)
     else:
         yara_files = get_yara_files(args.filenames)
+        print(f"Running in local mode on {len(yara_files)} files")
         for file in yara_files:
             repo = Repo(".")
             commit = repo.commit()
