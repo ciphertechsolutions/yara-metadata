@@ -118,8 +118,6 @@ def main():
     current_date = date.today()
     branch_from = os.environ.get("YARA_METADATA_BRANCH_FROM")
     branch_to = os.environ.get("YARA_METADATA_BRANCH_TO")
-    branch_from = "origin/master"
-    branch_to = "da7ee92282081a8cdf684ab8e4d658f5a9202b6b"
     if args.initial:
         initial_run(file_names, created_tag, modified_tag, ignored_hashes, store_commit_hash)
     elif branch_from and branch_to:
