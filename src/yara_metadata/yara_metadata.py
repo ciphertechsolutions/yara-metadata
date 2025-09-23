@@ -1,10 +1,11 @@
 import argparse
-from codecs import ignore_errors
 from collections import defaultdict
 from dataclasses import dataclass
 import datetime
+from io import BytesIO
 import os
 from pathlib import Path
+import tempfile
 from typing import List
 from git import Repo, Commit
 from git.types import Files_TD
@@ -61,15 +62,26 @@ def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files
     print(f"Running in merge mode with from: {branch_from}, to: {branch_to}.  Processing {len(commits)} commits.")
     process_commits(commits, ignored_hashes, files, created_tag, modified_tag, store_commit_hash)
 
-def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str):
+def compare_rule(a: yaramod.Rule, b: yaramod.Rule, modified_tag: str):
+    a_meta = a.get_meta_with_name(modified_tag)
+    b_meta = b.get_meta_with_name(modified_tag)
+    a_modified = a_meta.value.string
+    b_modified = b_meta.value.string
+    a_meta.value = yaramod.Literal("")
+    b_meta.value = yaramod.Literal("")
+    match = a.text == b.text
+    a_meta.value = yaramod.Literal(a_modified)
+    b_meta.value = yaramod.Literal(b_modified)
+    return match
+
+def process_rules(file_path: Path, yara_file: YaraFile, old_yara_file: YaraFile, created_tag: str, created_on: str, modified_tag: str, last_modified: str, commit_hash: str, store_commit_hash: bool):
     updated = False
     updates = []
-    try:
-        yara_file = ym.parse_file(str(file_path))
-    except yaramod.ParserError:
-        print(f'Failed to parse {file_path}, please add the following metadata manually, if needed: {created_tag} = "{created_on}", {modified_tag} = "{last_modified}", "commit_hash" = "{commit_hash}"')
-        return
     for rule in yara_file.rules:
+        old_rule = [old_rule for old_rule in old_yara_file.rules if rule.name == old_rule.name]
+        if old_rule:
+            if compare_rule(rule, old_rule[0], modified_tag):
+                continue
         if not rule.get_meta_with_name(created_tag):
             updated = True
             updates.append(f"Created: {created_tag}, with value: {str(created_on)}")
@@ -96,6 +108,20 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
     if updated:
         print(f'Updating {file_path}: {updates}')
         overwrite_file(Path(file_path), yara_file.text_formatted)
+
+
+def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str, old_content: bytes):
+    try:
+        yara_file = ym.parse_file(str(file_path))
+        with tempfile.TemporaryFile("wb", suffix=".yara", delete=False) as output_file:
+            output_file.write(old_content)
+            output_file.close()
+            old_yara_file = ym.parse_file(output_file.name)
+            process_rules(file_path, yara_file, old_yara_file, created_tag, created_on, modified_tag, last_modified, commit_hash, store_commit_hash)
+            os.unlink(output_file.name)
+    except yaramod.ParserError:
+        print(f'Failed to parse {file_path}, please add the following metadata manually, if needed: {created_tag} = "{created_on}", {modified_tag} = "{last_modified}", "commit_hash" = "{commit_hash}"')
+        return
 
 
 def main():
@@ -128,7 +154,9 @@ def main():
         for file in yara_files:
             repo = Repo(".")
             commit = repo.commit()
-            update_metadata(file, current_date, current_date, created_tag, modified_tag, store_commit_hash, commit.hexsha)
+            old_file = commit.parents[0].tree / str(file).replace("\\", "/")
+            old_content = BytesIO(old_file.data_stream.read()).getvalue()
+            update_metadata(file, current_date, current_date, created_tag, modified_tag, store_commit_hash, commit.hexsha, old_content)
 
 def overwrite_file(path: Path, new_content: str):
     with path.open("r") as file:
