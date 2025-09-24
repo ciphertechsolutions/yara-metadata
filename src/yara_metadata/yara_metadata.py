@@ -52,7 +52,11 @@ def process_commits(commits: List[Commit], ignored_hashes: List[str], files: Lis
                 yara_files[file_name].created_on.commit = commit
                 yara_files[file_name].file = value
     for yara_file in yara_files.values():
-        update_metadata(yara_file.file_path, yara_file.last_modified.date, yara_file.created_on.date, created_tag, modified_tag, store_commit_hash, yara_file.last_modified.commit.hexsha)
+        repo = Repo(".")
+        commit = repo.commit()
+        old_file = commit.parents[0].tree / str(yara_file.file_path).replace("\\", "/")
+        old_content = BytesIO(old_file.data_stream.read()).getvalue()
+        update_metadata(yara_file.file_path, yara_file.last_modified.date, yara_file.created_on.date, created_tag, modified_tag, store_commit_hash, yara_file.last_modified.commit.hexsha, old_content)
 
 
 def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files: List[Path], created_tag, modified_tag, store_commit_hash):
