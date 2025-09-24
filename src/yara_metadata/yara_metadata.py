@@ -117,7 +117,7 @@ def process_rules(file_path: Path, yara_file: YaraFile, old_yara_file: YaraFile,
 def update_metadata(file_path: Path, last_modified: date, created_on: date, created_tag: str, modified_tag: str, store_commit_hash: bool, commit_hash: str, old_content: bytes):
     try:
         yara_file = ym.parse_file(str(file_path))
-        with tempfile.TemporaryFile("wb", suffix=".yara", delete=False) as output_file:
+        with tempfile.NamedTemporaryFile("wb", suffix=".yara", delete=False) as output_file:
             output_file.write(old_content)
             output_file.close()
             old_yara_file = ym.parse_file(output_file.name)
