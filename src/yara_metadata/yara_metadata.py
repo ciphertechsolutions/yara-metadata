@@ -69,13 +69,17 @@ def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files
 def compare_rule(a: yaramod.Rule, b: yaramod.Rule, modified_tag: str):
     a_meta = a.get_meta_with_name(modified_tag)
     b_meta = b.get_meta_with_name(modified_tag)
-    a_modified = a_meta.value.string
-    b_modified = b_meta.value.string
-    a_meta.value = yaramod.Literal("")
-    b_meta.value = yaramod.Literal("")
+    if a_meta:
+        a_modified = a_meta.value.string
+        a_meta.value = yaramod.Literal("")
+    if b_meta:
+        b_modified = b_meta.value.string
+        b_meta.value = yaramod.Literal("")
     match = a.text == b.text
-    a_meta.value = yaramod.Literal(a_modified)
-    b_meta.value = yaramod.Literal(b_modified)
+    if a_meta:
+        a_meta.value = yaramod.Literal(a_modified)
+    if b_meta:
+        b_meta.value = yaramod.Literal(b_modified)
     return match
 
 def process_rules(file_path: Path, yara_file: YaraFile, old_yara_file: YaraFile, created_tag: str, created_on: str, modified_tag: str, last_modified: str, commit_hash: str, store_commit_hash: bool):
@@ -148,6 +152,8 @@ def main():
     current_date = date.today()
     branch_from = os.environ.get("YARA_METADATA_BRANCH_FROM")
     branch_to = os.environ.get("YARA_METADATA_BRANCH_TO")
+    branch_from = "origin/master"
+    branch_to = "8d6a521c6c99b4b941b104fed82296a11ef50bcf"
     if args.initial:
         initial_run(file_names, created_tag, modified_tag, ignored_hashes, store_commit_hash)
     elif branch_from and branch_to:
