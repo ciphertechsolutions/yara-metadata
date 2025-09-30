@@ -54,9 +54,13 @@ def process_commits(commits: List[Commit], ignored_hashes: List[str], files: Lis
     for yara_file in yara_files.values():
         repo = Repo(".")
         commit = repo.commit()
-        old_file = commit.parents[0].tree / str(yara_file.file_path).replace("\\", "/")
-        old_content = BytesIO(old_file.data_stream.read()).getvalue()
-        update_metadata(yara_file.file_path, yara_file.last_modified.date, yara_file.created_on.date, created_tag, modified_tag, store_commit_hash, yara_file.last_modified.commit.hexsha, old_content)
+        try:
+            old_file = commit.parents[0].tree / str(yara_file.file_path).replace("\\", "/")
+            old_content = BytesIO(old_file.data_stream.read()).getvalue()
+        except KeyError:
+            old_content = None
+        finally:
+            update_metadata(yara_file.file_path, yara_file.last_modified.date, yara_file.created_on.date, created_tag, modified_tag, store_commit_hash, yara_file.last_modified.commit.hexsha, old_content)
 
 
 def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files: List[Path], created_tag, modified_tag, store_commit_hash):
@@ -122,7 +126,10 @@ def update_metadata(file_path: Path, last_modified: date, created_on: date, crea
     try:
         yara_file = ym.parse_file(str(file_path))
         with tempfile.NamedTemporaryFile("wb", suffix=".yara", delete=False) as output_file:
-            output_file.write(old_content)
+            if old_content:
+                output_file.write(old_content)
+            else:
+                output_file.write(file_path.read_bytes())
             output_file.close()
             old_yara_file = ym.parse_file(output_file.name)
             process_rules(file_path, yara_file, old_yara_file, created_tag, created_on, modified_tag, last_modified, commit_hash, store_commit_hash)
@@ -162,9 +169,13 @@ def main():
         for file in yara_files:
             repo = Repo(".")
             commit = repo.commit()
-            old_file = commit.parents[0].tree / str(file).replace("\\", "/")
-            old_content = BytesIO(old_file.data_stream.read()).getvalue()
-            update_metadata(file, current_date, current_date, created_tag, modified_tag, store_commit_hash, commit.hexsha, old_content)
+            try:
+                old_file = commit.parents[0].tree / str(file).replace("\\", "/")
+                old_content = BytesIO(old_file.data_stream.read()).getvalue()
+            except KeyError:
+                old_content = None            
+            finally:
+                update_metadata(file, current_date, current_date, created_tag, modified_tag, store_commit_hash, commit.hexsha, old_content)
 
 def overwrite_file(path: Path, new_content: str):
     with path.open("r") as file:
