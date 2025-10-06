@@ -65,6 +65,8 @@ def process_commits(commits: List[Commit], ignored_hashes: List[str], files: Lis
 
 def merge_run(branch_from: str, branch_to: str, ignored_hashes: List[str], files: List[Path], created_tag, modified_tag, store_commit_hash):
     repo = Repo(".")
+    for remote in repo.remotes:
+        remote.fetch()
     commits = repo.git.rev_list(f"{branch_from}..{branch_to}")
     commits = [commit for commit in repo.iter_commits() if commit.hexsha in commits]
     print(f"Running in merge mode with from: {branch_from}, to: {branch_to}.  Processing {len(commits)} commits.")
@@ -159,6 +161,8 @@ def main():
     current_date = date.today()
     branch_from = os.environ.get("YARA_METADATA_BRANCH_FROM")
     branch_to = os.environ.get("YARA_METADATA_BRANCH_TO")
+    branch_from = "origin"
+    branch_to = "bc1b59e2e1c688f70d4d37834340b87d72137eac"
     if args.initial:
         initial_run(file_names, created_tag, modified_tag, ignored_hashes, store_commit_hash)
     elif branch_from and branch_to:
